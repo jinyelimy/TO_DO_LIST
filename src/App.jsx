@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { getDailyQuoteIndex, quoteLibrary } from "./quotes";
 
 const STORAGE_KEY = "cozy-todos-modal";
@@ -427,6 +427,9 @@ function App() {
   const todayIso = getTodayIso();
   const [selectedDate, setSelectedDate] = useState(todayIso);
   const [displayedMonth, setDisplayedMonth] = useState(todayIso);
+  const [appScale, setAppScale] = useState(1);
+  const [appShellSize, setAppShellSize] = useState({ width: 1600, height: 1100 });
+  const appShellRef = useRef(null);
   const [todos, setTodos] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
 
@@ -560,6 +563,51 @@ function App() {
     setQuoteIndex(getDailyQuoteIndex(todayIso));
   }, [todayIso]);
 
+  useLayoutEffect(() => {
+    const updateScale = () => {
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const shell = appShellRef.current;
+
+      if (viewportWidth <= 1120) {
+        setAppScale(1);
+        return;
+      }
+
+      if (!shell) {
+        return;
+      }
+
+      const nextWidth = shell.scrollWidth || 1600;
+      const nextHeight = shell.scrollHeight || 1100;
+
+      setAppShellSize({ width: nextWidth, height: nextHeight });
+
+      const availableWidth = viewportWidth - 20;
+      const availableHeight = viewportHeight - 20;
+      const nextScale = Math.min(availableWidth / nextWidth, availableHeight / nextHeight, 1);
+
+      setAppScale(nextScale);
+    };
+
+    updateScale();
+    window.addEventListener("resize", updateScale);
+
+    const resizeObserver =
+      appShellRef.current && typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => updateScale())
+        : null;
+
+    if (resizeObserver && appShellRef.current) {
+      resizeObserver.observe(appShellRef.current);
+    }
+
+    return () => {
+      window.removeEventListener("resize", updateScale);
+      resizeObserver?.disconnect();
+    };
+  }, []);
+
   useEffect(() => {
     if (getMonthKeyFromIso(displayedMonth) !== getMonthKeyFromIso(selectedDate)) {
       setDisplayedMonth(`${getMonthKeyFromIso(selectedDate)}-01`);
@@ -681,7 +729,12 @@ function App() {
 
   return (
     <>
-      <div className="app-shell">
+      <div className="app-viewport">
+        <div
+          className="app-scale-frame"
+          style={{ width: `${appShellSize.width * appScale}px`, height: `${appShellSize.height * appScale}px` }}
+        >
+          <div className="app-shell" ref={appShellRef} style={{ transform: `scale(${appScale})` }}>
         <aside className="sidebar">
           <div className="brand">
             <div className="brand-mark">
@@ -997,6 +1050,8 @@ function App() {
             </aside>
           </div>
         </main>
+      </div>
+        </div>
       </div>
 
       {isModalOpen ? (
