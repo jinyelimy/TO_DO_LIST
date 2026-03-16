@@ -3,6 +3,10 @@
 따뜻한 감성의 데스크톱형 투두 대시보드를 React로 구현한 프로젝트입니다.  
 캘린더 날짜 선택, 진행률 시각화, 카테고리 필터, 날씨 패널, 모달 기반 할 일 추가 흐름까지 한 화면에서 볼 수 있도록 구성했습니다.
 
+## 배포 링크
+
+- [https://to-do-list-dashboard-rho.vercel.app](https://to-do-list-dashboard-rho.vercel.app)
+
 ## 화면 미리보기
 
 ![대시보드 화면](./public/readme-dashboard.png)
